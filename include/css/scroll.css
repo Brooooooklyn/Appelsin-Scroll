@@ -1,0 +1,78 @@
+body{
+    background: url("../img/bg.png") repeat;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -o-user-select:none;
+    -ms-user-select:none;
+}
+h1{
+    margin-top: 70px;
+    color: white;
+    text-align: center;
+}
+h2{
+    text-align: center;
+}
+a{
+    text-decoration: none;
+}
+.appelsin-scroll{
+    position: relative;
+    overflow: hidden;
+}
+.main{
+    width: 500px;
+    height: 500px;
+    margin: auto;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    border-top: 1px rgba(255,255,255,.6) solid;
+    background: #bba;
+}
+.content{
+    width: 100%;
+    height: 100%;
+}
+.appelsin-scroll-way{
+    height: 8px;
+    width: 8px;
+    position: absolute;
+    right: 0;
+    background: #555;
+    opacity: 0;
+    border-radius: 5px;
+    margin: 5px;
+    display: block;
+    -webkit-transition: .2s;
+    -moz-transition: .2s;
+    -o-transition: .2s;
+    transition: .2s;
+}
+.appelsin-scroll-way-horizen{
+    bottom: 0;
+}
+.appelsin-scroll-bar{
+    background: rgba(0,0,0,.6);
+    position: relative;
+    border-radius: 3px;
+}
+.appelsin-scroll-bar-vertical{
+    height: 30px;
+    width: 6px;
+    margin: 0 1px;
+}
+.appelsin-scroll-bar-horizen{
+    height: 6px;
+    width: 30px;
+    margin: 1px 0;
+}
+.appelsin-scroll-content{
+    position: absolute;
+    padding: 0 20px;
+}
+.text-content{
+    word-wrap:break-word;
+    font: 12px/150% "Hiragino Sans GB","Microsoft YaHei","\5FAE\8F6F\96C5\9ED1",tahoma,arial,simsun,"\5B8B\4F53";
+    color: #333;
+}

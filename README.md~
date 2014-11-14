@@ -1,6 +1,7 @@
 #Appelsin-Scroll
 ===============
 
+cross brower custom scroll bar
 ##首先引入库文件AppelsinScroll.js
 ><script src="AppelsinScroll.js"></script>
 
