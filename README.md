@@ -2,14 +2,12 @@
 ===============
 
 ##首先引入库文件AppelsinScroll.js
->
-<script src="AppelsinScroll.js">
-</script>
 
 ##给需要自定义滚动条的区域加上"appelsin-scroll" CSS类
 
 >如：
 <div class="content appelsin-scroll">
+	content...
 </div>
 
 ##初始化滚动条
