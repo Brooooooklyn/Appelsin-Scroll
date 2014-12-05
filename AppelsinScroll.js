@@ -417,7 +417,7 @@
      * @type {Object}
      */
     var appelsinScrollPrototype = {
-        init : function(){
+        init : function(horizon){
             var length,
                 target,
                 scrollBody,
