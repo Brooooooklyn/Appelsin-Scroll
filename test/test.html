@@ -3,11 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <title>custom scroll bar</title>
-    <link rel="stylesheet" href="include/css/scroll.css" type="text/css" />
+    <link rel="stylesheet" href="../scroll.css" type="text/css" />
+    <style>
+        body{
+            background: url("../img/bg.png") repeat;
+            -webkit-user-select:none;
+            -moz-user-select:none;
+            -o-user-select:none;
+            -ms-user-select:none;
+        }
+        h1{
+            margin-top: 70px;
+            color: white;
+            text-align: center;
+        }
+        h2{
+            text-align: center;
+        }
+        a{
+            text-decoration: none;
+        }
+        .main{
+            width: 500px;
+            height: 500px;
+            margin: auto;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            border-radius: 5px;
+            border-top: 1px rgba(255,255,255,.6) solid;
+            background: #bba;
+        }
+        .content{
+            width: 100%;
+            height: 100%;
+        }
+        .text-content{
+            word-wrap:break-word;
+            font: 12px/150% "Hiragino Sans GB","Microsoft YaHei","\5FAE\8F6F\96C5\9ED1",tahoma,arial,simsun,"\5B8B\4F53";
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <h1>Appelsin Scroll</h1>
-    <a href="#"><img style="position: absolute; top: 0; right: 30px; border: 0;" src="include/img/github.png" alt="Fork me on GitHub"></a>
+    <a href="https://github.com/Brooooooklyn/Appelsin-Scroll"><img style="position: absolute; top: 0; right: 30px; border: 0;" src="../img/github.png" alt="Fork me on GitHub"></a>
     <div class="main">
         <div class="content appelsin-scroll">
             <span class="text-content">
@@ -16,20 +55,9 @@
             </span>
         </div>
     </div>
-    <script src="include/js/scroll.js"></script>
+    <script src="../AppelsinScroll.js"></script>
     <script>
-    appelsinScroll.init(true , false);
+        appelsinScroll.init();
     </script>
-    <script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-	  ga('create', 'UA-51809686-2', 'auto');
-	  ga('send', 'pageview');
-	  ga(‘set’, '&uid', {{USER_ID}}); // 使用已登录的 user_id 来设置用户 ID。
-
-	</script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /**
  * support IE8+/Safari/Chrome/Firefox
  * @author lynweklm@gmail.com
- * @beta 0.0.1
+ * @beta 0.0.2
  * @license MIT
  */
 ;(function(window , document , undefined){
@@ -13,9 +13,51 @@
         targetQueue = {
             length : 0,
             push : function(val){
-                var count = this.length;
-                this[count] = val;
+                var count = this.length,
+                    node  = this.initNode(val , count);
+                this[count] = node;
                 this.length = count + 1;
+            },
+            remove : function(flag){
+                this.length = this.length - 1;
+                freeQuee.push(flag);
+                this.flag = undefined;
+            },
+            freeQuee : [],
+            /**
+             * Only create all needed node here and package them when Appelsin init
+             * @param  {Object Node} scrollBody The node object needed to add scroll
+             * @param  {Number} flag       [description]
+             * @return {Object}            Include scrollBody scrollContent scrollWay scrollBar width height dist
+             */
+            initNode : function(scrollBody , flag){
+                var scrollBar    = document.createElement("DIV"),
+                    scrollWay    = document.createElement("DIV"),
+                    existsWay    = document.querySelector('.appelsin-scroll-way'),//if exists
+                    box          = scrollBody.getBoundingClientRect(),
+                    width        = box.width,
+                    height       = box.height,
+                    scrollContent;
+                scrollBar.setAttribute('class' , 'appelsin-scroll-bar');
+                scrollWay.setAttribute('class' , 'appelsin-scroll-way');
+                if(existsWay){
+                    scrollBody.removeChild(existsWay);//remove the scrollWay if exists
+                };
+                scrollContent = setScrollContent(scrollBody);
+                if(flag > 100){
+                    throw "Too many element to handler";
+                }else{
+                    return {
+                        scrollBody    : scrollBody,
+                        scrollContent : scrollContent,
+                        scrollWay     : scrollWay,
+                        scrollBar     : scrollBar,
+                        width         : width,
+                        height        : height,
+                        barPosition   : 0,
+                        "$dist"       : flag
+                    };
+                }
             }
         };
     /**
@@ -55,7 +97,7 @@
                 return true;
             }else{
                 return false;
-            }
+            };
         };
     };
     /**
@@ -85,6 +127,7 @@
      * 向一个元素增加一个class name
      * @param {Node Object} element 要增加class的元素
      * @param {String} className 要增加的class 名
+     * @return {Node Object} 返回增加class后的element
      */
     function addClass(element , className){
         if(element.classList){
@@ -96,8 +139,9 @@
             }else{
                 classNames.push(className);
             };
-            div.className = classNames.join(" ");
+            element.className = classNames.join(" ");
         };
+        return element;
     };
     /**
      * 判断一个元素是否有className
@@ -115,45 +159,29 @@
     };
     /**
      * 获取需要自定义滚动条的区域，即带有appelsin-scroll class name的区域
-     * 此处获取需要的区域之后，还创建了滑道和滑块Node Object，计算了此区域的大小
-     * @return {Object}
+     * @return {Object Array} include the areas needed to add scroll
      */
-    function getScrollTarget(){
-        var scrollBody   = document.querySelector('.appelsin-scroll'),
-            scrollBar    = document.createElement("DIV"),
-            scrollWay    = document.createElement("DIV"),
-            existsWay    = document.querySelector('.appelsin-scroll-way'),//if exists
-            box          = scrollBody.getBoundingClientRect(),
-            width        = box.width,
-            height       = box.height;
-        scrollBar.setAttribute('class' , 'appelsin-scroll-bar');
-        scrollWay.setAttribute('class' , 'appelsin-scroll-way');
-        if(existsWay){
-            scrollBody.removeChild(existsWay);//remove the scrollWay if exists
-        };
-        appelsinScroll.scrollBody = scrollBody;
-        console.log("get scroll target success");
-        return {
-            body : scrollBody,
-            scrollWay : scrollWay,
-            scrollBar : scrollBar,
-            width : width,
-            height : height
+    function getScrollTarget(scrollBody){
+        var areas  = document.querySelectorAll(".appelsin-scroll"),
+            length = areas.length,
+            tempNode;
+        for(var i = 0 ; i < length ; i++){
+            tempNode = areas[i];
+            targetQueue.push(tempNode);
         };
     };
     //set a wrapper before insert scrollway
-    function setScrollContent(){
-        var scrollBody = appelsinScroll.scrollBody,
-            children   = scrollBody.childNodes,
+    function setScrollContent(scrollBody){
+        var children   = scrollBody.childNodes,
             scrollContent = document.createElement('DIV'),
             tempNode;
-        scrollContent.setAttribute('class' , 'appelsin-scroll-content');
+        scrollContent = addClass(scrollContent , 'appelsin-scroll-content');
         for(var i = children.length - 1 ; i >= 0 ; i --){
             tempNode = children[i];
             scrollContent.appendChild(tempNode);
         };
         scrollBody.appendChild(scrollContent);
-        appelsinScroll.scrollContent = scrollContent;
+        return scrollContent;
     };
     /**
      * 设置当鼠标进入需要滚动条的区域时显示滑道
@@ -167,26 +195,29 @@
         eventHandler.addHandler(element , "mouseleave" , function(){
             scrollWay.style.opacity = 0;
         });
-        wheelEventHandler(element , scrollWay);
         //console.log("set mouse event");
     };
     /**
      * 设置滑道上的鼠标点击事件监听
-     * @param {Node Object} element
+     * @param {Int} $dist
      */
-    function setScrollClickEvent(element , type){
+    function setScrollClickEvent($dist){
+        var target  = targetQueue[$dist],
+            content = target.scrollContent,
+            type    = target.type,
+            element = target.scrollWay;
         eventHandler.addHandler(element , "click" , function(e){
-            var content     = appelsinScroll.scrollContent,
-                scrollType  = (type === "horizon") ? "Width" : "Height",
-                offsetType  = (type === "horizon") ? "X" : "Y",
-                scrollSize  = element["offset" + scrollType],
-                contentSize = content["scroll" + scrollType],
-                offset      = e["offset" + offsetType],
-                scrollBar   = getFirstElementChild(element),
+            var scrollType   = (type === "horizon") ? "Width" : "Height",
+                offsetType   = (type === "horizon") ? "X" : "Y",
+                contentMargin= (type === "horizon") ? "marginLeft" : "marginTop",
+                scrollSize   = element["offset" + scrollType],
+                contentSize  = content["scroll" + scrollType],
+                offset       = e["offset" + offsetType],
+                scrollBar    = target.scrollBar,
                 distance;
             distance = parseInt(translateCord(scrollSize - 30 , offset , contentSize - scrollSize - 10));
-            content.style.marginTop = -distance + "px";
-            updateScrollBarPosition(scrollBar , scrollSize , offset);
+            content.style[contentMargin] = -distance + "px";
+            updateScrollBarPosition(scrollBar , scrollSize , offset , $dist);
             //console.log("one click event");
         });
         //console.log("set click event");
@@ -195,7 +226,7 @@
      * 设置滑块的事件监听
      * @param {Node Object} element
      */
-    function setScrollBarEvent(element , type){
+    function setScrollBarEvent(element , $dist){
         var flag = {
                 mousemoveFlag : undefined,
                 mouseupFlag : undefined
@@ -208,7 +239,7 @@
         eventHandler.addHandler(element , "mousedown" , function(e){
             stopPropagation(e);
             var that = this;
-            eventHandler.addHandler(document , "mousemove" , mouseMoveHandler(that , flag , type));
+            eventHandler.addHandler(document , "mousemove" , mouseMoveHandler($dist , flag));
             eventHandler.addHandler(document , "mouseup" , mouseUpHandler(flag));
         });
     };
@@ -216,27 +247,43 @@
      * mouse move handler
      * @param  {Node Object} context 滑块
      * @param  {Object} flag    记录事件监听回调函数的id
-     * @param  {String} type    滑块类型（horizon / vertical）
      * @return {function} handlerQueue[dist] 事件函数
      */
-    function mouseMoveHandler(context , flag , type){
-        var dist = handlerQueue.length + 1;
+    function mouseMoveHandler($dist , flag){
+        var dist = handlerQueue.length + 1,
+            type = targetQueue[$dist].type;
         handlerQueue[dist]    = function(){
-            var scrollWay     = context.parentNode,
-                content       = appelsinScroll.scrollContent,
-                contentType   = (type === "horizon") ? "Width" : "Height",
-                sizeType      = (type === "horizon") ? "width" : "height",
-                marginType    = (type === "horizon") ? "left" : "top",
-                contentSize   = content["scroll" + contentType],
-                margin        = scrollWay.getBoundingClientRect()[marginType],
-                scrollWaySize = scrollWay.getBoundingClientRect()[sizeType],
+            var scrollWay     = targetQueue[$dist].scrollWay,
+                scrollBar     = targetQueue[$dist].scrollBar,
+                content       = targetQueue[$dist].scrollContent,
+                contentSize,
+                margin,
+                scrollWaySize,
+                contentType,
+                sizeType,
+                marginType,
+                contentMargin,
                 offset,
                 positon;
-            event.toELement = context;
+            if(type === "vertical"){
+                contentType  = "Height";
+                sizeType     = "height";
+                marginType   = "top";
+                contentMargin= "marginTop";
+            }else{
+                contentType  = "Width";
+                sizeType     = "width";
+                marginType   = "left";
+                contentMargin= "marginLeft";
+            };
+            margin           = scrollWay.getBoundingClientRect()[marginType];
+            scrollWaySize    = parseInt(scrollWay.style[sizeType]);
+            contentSize      = content["scroll" + contentType];
+            event.toELement  = scrollWay;
             offset = parseInt(event.clientY - margin);
-            updateScrollBarPosition(context , scrollWaySize , offset);
+            updateScrollBarPosition(scrollBar , scrollWaySize , offset , $dist);
             positon = translateCord(scrollWaySize , offset , contentSize - scrollWaySize - 10);
-            content.style.marginTop = -positon + "px";
+            content.style[contentMargin] = -positon + "px";
             scrollWay.style.opacity = 0.9;
             //console.log(offset);
         };
@@ -256,7 +303,6 @@
         handlerQueue[dist] = function(){
             eventHandler.removeHandler(document , "mousemove" , handlerQueue[mousemoveFlag]);
             eventHandler.removeHandler(document , "mouseup" , handlerQueue[dist]);
-            console.log(event);
             //console.log("stop record the pointer positon");
         };
         handlerQueue[length] = dist;
@@ -268,18 +314,21 @@
      * @param  {Node Object} element   滚动区域
      * @param  {Node Object} scrollWay 滑道
      */
-    function wheelEventHandler(element , scrollWay){
+    function wheelEventHandler($dist){
         //判断浏览器
-        var isFF =/FireFox/i.test(navigator.userAgent),
-            distance  = 0,
-            contentSize = element.scrollHeight - 10;
+        var isFF          =/FireFox/i.test(navigator.userAgent),
+            target        = targetQueue[$dist],
+            scrollWay     = target.scrollWay,
+            scrollContent = target.scrollContent,
+            contentSize   = scrollContent.scrollHeight - 10,
+            distance;
         if(containClass(scrollWay , "appelsin-scroll-way-vertical")){
-            eventHandler.addHandler(element , "mousewheel" , function(e){
-                stopPropagation(e);
-                var scrollBar = getFirstElementChild(scrollWay),
+            eventHandler.addHandler(scrollContent , "mousewheel" , function(e){
+                var scrollBar   = target.scrollBar,
                     scrollSize  = scrollWay.getBoundingClientRect().height,
                     positon,
                     offset;
+                distance = targetQueue[$dist]["barPosition"];
                 if(!isFF){
                     offset = -e.wheelDelta / 120;
                 }else{
@@ -291,11 +340,11 @@
                     distance = scrollSize;
                 }else{
                     distance += (offset * 20);
+                    stopPropagation(e);
                 };
-                //console.log(scrollSize);
-                updateScrollBarPosition(scrollBar , scrollSize , distance);
+                updateScrollBarPosition(scrollBar , scrollSize , distance , $dist);
                 positon = translateCord(scrollSize , distance , contentSize - scrollSize);
-                getFirstElementChild(element).style.marginTop = -positon + "px";
+                scrollContent.style.marginTop = -positon + "px";
                 //console.log(distance);
             });
         }else{
@@ -325,97 +374,69 @@
     * @param {int} total 滑道的总长
     * @param {int} margin 滑块相对滑道起始位置的位移
     */
-    function updateScrollBarPosition(scrollBar , total , margin){
+    function updateScrollBarPosition(scrollBar , total , margin , $dist){
         var top    = 15,
             bottom = total - 15,
             offset;
         if(margin > bottom){
-            offset = bottom;
+            offset = bottom - 15;
         }else if(margin < top){
-            offset = top;
+            offset = top - 15;
         }else{
-            offset = margin;
+            offset = margin - 15;
         };
-        scrollBar.style.marginTop = offset - 15 + "px";
-    };
-   /**
-    * 初始化滑道事件
-    * @param {object} opt 设置事件配置项
-    */
-    function initScrollEvent(opt){
-        if(opt.click.ele){
-            setScrollClickEvent(opt.click.ele);
-        };
-        if(opt.mouse.ele){
-            setScrollMouseEvent(opt.mouse.ele , opt.mouse.scrollWay);
-        };
+        scrollBar.style.transform = "translate(0px , " + offset + "px)";
+        targetQueue[$dist]["barPosition"] = offset;
+        //console.log(targetQueue[$dist]["barPosition"]);
     };
    /**
     * 组装滑块与滑道，并为它们加入相应的class name
-    * @param {Node Object} scrollBar 滑块
-    * @param {Node Object} scrollWay 滑道
-    * @param {int} size 滑道大小，水平则是宽度，垂直则是高度
-    * @param {string} type 滑道类型
+    * @param {Object} target The target need to be packed
     * Warning 对滑块的事件监视要在此添加
     */
-    function scrollFactory(scrollBar , scrollWay , size , type){
-        if(type){
-            var scrollBody = appelsinScroll.scrollBody,
-                scrollBarTemp,
-                scrollWayTemp,
-                sizeType = (type === "horizon") ? "width" : "height";
-            scrollBarTemp = scrollBar.cloneNode();
-            scrollWayTemp = scrollWay.cloneNode();
-            addClass(scrollBarTemp , 'appelsin-scroll-bar-' + type);
-            addClass(scrollWayTemp , 'appelsin-scroll-way-' + type);
-            scrollWayTemp.style[sizeType] = size - 10 + "px";
-            scrollWayTemp.appendChild(scrollBarTemp);
-            insertScrollWay(scrollWayTemp);
-            setScrollBarEvent(scrollBarTemp , type);
-        };
-    };
-    /**
-     * 讲需要自定义滑块的部分的子元素外边通过setScrollContent加上自定义的容器
-     * 然后将滑道滑块通过scrollFactory组装
-     * 然后加上事件监听
-     * 插入到DOM相应的部分中
-     * @param  {Node Object} scrollWay 滑道
-     */
-    function insertScrollWay(scrollWay){
-        //the option of scrollbar event
-        var scrollBody    = appelsinScroll.scrollBody,
-            option = {
-                "click" : {
-                    "ele" : scrollWay
-                },
-                "mouse" : {
-                    "ele" : scrollBody,
-                    "scrollWay" : scrollWay
-                }
-            };
-        setScrollContent();
-        initScrollEvent(option);
+    function scrollFactory(target){
+        var type          = target.type,
+            sizeType      = (type === "horizon") ? "width" : "height",
+            size          = target.size,
+            scrollBar     = target.scrollBar,
+            scrollWay     = target.scrollWay,
+            scrollContent = target.scrollContent,
+            scrollBody    = target.scrollBody;
+        addClass(scrollBar , 'appelsin-scroll-bar-' + type);
+        addClass(scrollWay , 'appelsin-scroll-way-' + type);
+        scrollWay.style[sizeType] = size - 10 + "px";
+        scrollWay.appendChild(scrollBar);
         scrollBody.appendChild(scrollWay);
+        setScrollClickEvent(target["$dist"]);
+        setScrollMouseEvent(scrollBody , scrollWay);
+        setScrollBarEvent(scrollBar , target["$dist"]);
+        wheelEventHandler(target["$dist"]);
     };
     /**
      * API exposed
      * @type {Object}
      */
     var appelsinScrollPrototype = {
-        init : function(vertical , horizon){
-            var target = getScrollTarget(),
-                scrollBody = target.body,
-                scrollWay  = target.scrollWay,
-                scrollBar  = target.scrollBar,
-                width      = target.width,
-                height     = target.height;
-            if(horizon || vertical){
-                horizon = horizon ? "horizon" : false;
-                vertical= vertical? "vertical": false;
-                scrollFactory(scrollBar , scrollWay , width , horizon);
-                scrollFactory(scrollBar , scrollWay , width , vertical);
-            }else{
-                throw "unsupported params type , bool needed";
+        init : function(){
+            var length,
+                target,
+                scrollBody,
+                scrollWay,
+                scrollBar,
+                size,
+                type;
+            getScrollTarget();
+            length = targetQueue.length;
+            for(var i = 0 ; i < length ; i++){
+                target = targetQueue[i];
+                scrollBody = target.scrollBody;
+                scrollWay  = target.scrollWay;
+                scrollBar  = target.scrollBar;
+                type       = horizon ? "horizon" : "vertical";
+                size       = (type === "horizon") ? target.width : target.height;
+                targetQueue[i]['type'] = type;
+                targetQueue[i]['size'] = size;
+                scrollFactory(targetQueue[i]);
             };
         }
     };
@@ -446,8 +467,8 @@
      * @return {bool/void}
      */
     function stopPropagation(event){
-        if(event.stopPropagation){
-            event.stopPropagation();
+        if(event.preventDefault){
+            event.preventDefault();
         }else if(event.cancelBubble){
             event.cancelBubble = true;
         }else{
@@ -464,5 +485,20 @@
             obj[key] = proto[key];
         };
     };
+    /**
+     * 判断浏览器支持哪一种trim，V8/TraceMonkey+/Nitro/Chakra 支持原生String的trim
+     * @return {function}
+     * @param {String} [value] [description]
+     */
+    var trim = (function() {
+        if (!String.prototype.trim) {
+            return function(value) {
+                return isString(value) ? value.replace(/^\s\s*/, '').replace(/\s\s*$/, '') : value;
+            };
+        };
+        return function(value) {
+            return isString(value) ? value.trim() : value;
+        };
+    })();
     extend(appelsinScroll , appelsinScrollPrototype);
 })(window , document);
